@@ -20,7 +20,7 @@ To use this classifier, you must have the following software installed on your s
 docker build -t allcatchr:latest .
 ```
 
-To run the full set of ALLcatchR classifiers (lineage, B-ALL, T-ALL, BCR-ABL1), use the scripts located in the /opt/allcatchr/scripts directory.
+To run the full set of ALLcatchR classifiers (lineage, B-ALL, T-ALL, BCR-ABL1), use the scripts located in the /scripts directory.
 
 
 ------------------------------------------------------------------------
