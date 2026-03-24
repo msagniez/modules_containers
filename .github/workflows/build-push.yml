@@ -30,7 +30,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./docker
+          context: ./docker/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/modules-containers/${{ steps.branch.outputs.name }}:latest
