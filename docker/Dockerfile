@@ -5,13 +5,13 @@ FROM rocker/r-ver:4.2.0
 WORKDIR /opt
 
 # Copy your local R script and other files into the container's working directory
-COPY mdall /opt/mdall
-WORKDIR /opt/mdall
+COPY allcatchr /opt/allcatchr
+WORKDIR /opt/allcatchr
 
 # Install any R packages required by your script
-RUN install.packages(c("devtools", "BiocManager", "dplyr", "stringr", "Seurat", "ggplot2", "ggrepel", "cowplot", "umap"), repos='cran.rstudio.com')
-RUN BiocManager::install(c("DESeq2", "SingleR", "SummarizedExperiment"))
-RUN devtools::install_github("JinmiaoChenLab/Rphenograph")
-RUN devtools::install_github("gu-lab20/MD-ALL")
+RUN install.packages(c("devtools","tools"), repos='cran.rstudio.com')
+RUN devtools::install_github("ALLCatchR")
+RUN devtools::install_github("ALLCatchR2")
+RUN devtools::install_github("ALLCatchRbcrabl1")
 
-ENV PATH="/opt/mdall/bin:${PATH}"
+ENV PATH="/opt/allcatchr/bin:${PATH}"
