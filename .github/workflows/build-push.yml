@@ -25,7 +25,7 @@ jobs:
 
       - name: Extract branch name
         id: branch
-        run: echo "name=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+        run: echo "name=$(echo ${GITHUB_REF#refs/heads/} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
