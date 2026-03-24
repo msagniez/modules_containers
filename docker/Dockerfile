@@ -25,8 +25,8 @@ RUN Rscript -e "install.packages(c('gert', 'gh', 'ragg'), repos='https://cran.rs
 RUN Rscript -e "install.packages(c('bslib', 'rmarkdown', 'shiny'), repos='https://cran.rstudio.com/')"
 RUN Rscript -e "install.packages(c('pkgload', 'rcmdcheck', 'usethis', 'miniUI', 'pkgdown'), repos='https://cran.rstudio.com/')"
 RUN Rscript -e "install.packages(c('roxygen2', 'testthat', 'profvis', 'rversions', 'urlchecker'), repos='https://cran.rstudio.com/')"
-RUN Rscript -e "install.packages(c('devtools', 'remotes', 'tools'), repos='https://cran.rstudio.com/')"
-RUN Rscript -e "install.packages('BiocManager', 'dplyr', repos='https://cran.rstudio.com/')"
+RUN Rscript -e "install.packages(c('devtools', 'remotes'), repos='https://cran.rstudio.com/')"
+RUN Rscript -e "install.packages(c('BiocManager', 'dplyr'), repos='https://cran.rstudio.com/')"
 RUN Rscript -e "BiocManager::install(c('singscore'))"
 
 
