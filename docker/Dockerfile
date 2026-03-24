@@ -6,6 +6,7 @@ WORKDIR /opt
 
 # Copy your local R script and other files into the container's working directory
 COPY allcatchr /opt/allcatchr
+COPY scripts/ALLcatchR_predict.R /scripts/ALLcatchR_predict.R
 WORKDIR /opt/allcatchr
 
 # Install any R packages required by your script
