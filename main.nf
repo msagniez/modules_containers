@@ -20,7 +20,7 @@ process ALLCATCHR {
     """
     mkdir -p ${prefix}
 
-    Rscript /scripts/ALLcatchR_predict.R \\
+    Rscript /opt/scripts/ALLcatchR_predict.R \\
         ${quant_dir} \\
         ${prefix}
     """
