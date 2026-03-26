@@ -82,13 +82,29 @@ if (args[1] == "--tx2gene") {
   }
 }
 
-# If --ignore-tx-version, strip versions from tx2gene AND let tximport strip from quant file IDs
+#Strip GeneIDs versions when needed
 if (ignore_tx_version) {
-  cat("Stripping version suffixes from transcript IDs in tx2gene...\n")
+  # Strip versions from both sides unconditionally
+  cat("--ignore-tx-version set: stripping version suffixes from both tx2gene and quant file IDs...\n")
   before <- nrow(tx2gene)
   tx2gene$TXNAME <- sub("\\.[0-9]+$", "", tx2gene$TXNAME)
   tx2gene <- unique(tx2gene)
   cat(sprintf("tx2gene: %d -> %d rows after deduplication\n", before, nrow(tx2gene)))
+  tximport_ignore_version <- TRUE
+
+} else if (quant_has_version) {
+  # Quant IDs have versions: keep tx2gene as-is to match
+  cat("Quant IDs have versions — keeping tx2gene as-is\n")
+  tximport_ignore_version <- FALSE
+
+} else {
+  # Quant IDs have no versions: strip versions from tx2gene to match
+  cat("Quant IDs have no versions — stripping version suffixes from tx2gene to match...\n")
+  before <- nrow(tx2gene)
+  tx2gene$TXNAME <- sub("\\.[0-9]+$", "", tx2gene$TXNAME)
+  tx2gene <- unique(tx2gene)
+  cat(sprintf("tx2gene: %d -> %d rows after deduplication\n", before, nrow(tx2gene)))
+  tximport_ignore_version <- FALSE
 }
 
 #Set sample names from file names
