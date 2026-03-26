@@ -2,8 +2,10 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  cat ("Usage: Rscript MDALL_predict.R </full/path/to/input/quant_files/directory> </full/path/to/output/directory>\n")
-  cat ("\nOutput: Prediction_results.tsv in output directory\n")
+  cat("Usage: Rscript MDALL_predict.R </full/path/to/input/quant_files/directory> </full/path/to/output/directory> [feature_ns]\n")
+  cat("\n  feature_ns  Optional. Comma-separated integers for PhenoGraph feature counts (variable_n_list).")
+  cat("\n              Default: 100,1000,1058")
+  cat("\n              Example: 100,200,500,1058\n")
   quit(status = 1)
 }
 
@@ -23,6 +25,19 @@ suppressPackageStartupMessages({
   library(MDALL)
   library(tools)
 })
+
+# Parse optional third argument, fall back to get_PhenoGraphPreds original defaults
+if (length(args) >= 3) {
+  feature_ns <- as.integer(strsplit(args[3], ",")[[1]])
+  if (any(is.na(feature_ns))) {
+    cat("ERROR: feature_ns must be a comma-separated list of integers (e.g. 100,500,1058)\n")
+    quit(status = 1)
+  }
+} else {
+  feature_ns <- c(100, 1000, 1058)
+}
+
+cat("Running PhenoGraph with feature counts:", paste(feature_ns, collapse = ", "), "\n\n")
 
 #Initialize the list of samples to process
 file_list <- list.files(path = quant, 
@@ -83,7 +98,7 @@ for (file_path in file_list) {
     #Run PhenoGraph clustering and SVM prediction
     df_out_phenograph=get_PhenoGraphPreds(obj_in = obj_, feature_panel = "keyFeatures", SampleLevel = "TestSample",
                                           neighbor_k = 10,
-                                          variable_n_list = c(100,1000,1058)
+                                          variable_n_list = feature_ns
     )
     
     df_out_svm=get_SVMPreds(models_svm, df_in = df_vst_i)

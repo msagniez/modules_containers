@@ -1,7 +1,39 @@
-# MD-ALL
+# MD-ALL classifier
 
-Add submodule :
-`git submodule add -b mdall https://github.com/msagniez/modules_containers modules/local/mdall`
+This repository provides:
+
+1\. The MD-ALL Docker container definition.
+2\. A script to run MD-ALL in both Phenograph and svm modes from gene-level counts.
+
+------------------------------------------------------------------------
+
+## Prerequisites
+
+To use this tool, you must have the following software installed on your system:
+
+-   [Docker](https://www.docker.com/) OR [Singularity](https://sylabs.io/singularity/) OR [Apptainer](https://apptainer.org/)
+
+------------------------------------------------------------------------
+
+## Installation
+
+``` bash
+docker build -t mdall:latest .
+```
+
+To run MD-ALL, use the scripts located in the /opt/scripts directory.
+
+
+------------------------------------------------------------------------
+
+## License
+
+No license registered for [MD-ALL](https://github.com/gu-lab20/MD-ALL)
+
+------------------------------------------------------------------------
+
+## Contact
+
 ## CI/CD
 
-[![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-and-push.yml/badge.svg?branch=)](https://github.com/msagniez/modules_containers/actions/workflows/build-and-push.yml?query=branch%3A)
+[![Build Status](https://github.com/msagniez/modules_containers/.github/workflows/build-push.yml/badge.svg?branch=)](https://github.com/msagniez/modules_containers/.github/workflows/build-push.yml?query=branch%3A)
