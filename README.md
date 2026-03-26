@@ -2,7 +2,7 @@
 
 This repository provides:
 
-1\. The MD-ALL Docker container definition.
+1\. The MD-ALL Docker container definition.  
 2\. A script to run MD-ALL in both Phenograph and svm modes from gene-level counts.
 
 ------------------------------------------------------------------------
