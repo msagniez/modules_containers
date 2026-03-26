@@ -1,17 +1,35 @@
 # Use a specific R version base image from the Rocker project
-FROM rocker/r-ver:4.2.0 
+FROM rocker/r-ver:4.5.0 
 
-# Set the working directory inside the container
+RUN apt-get update && apt-get install -y \
+    cmake \
+    libcurl4-gnutls-dev \
+    libssl-dev \
+    libxml2-dev \
+    libgit2-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libtiff5-dev \
+    libjpeg-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    libwebp-dev \
+    libglpk-dev \
+    pandoc \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install R packages layer by layer to respect dependency order
+RUN Rscript -e "install.packages(c('BiocManager','devtools','remotes','dplyr','stringr','umap','ggrepel'), repos = 'https://cran.rstudio.com/')"
+RUN Rscript -e "BiocManager::install(version = '3.22')"
+RUN Rscript -e "BiocManager::install(c('SummarizedExperiment','DESeq2','SingleR'))"
+RUN Rscript -e "pak::pak('JinmiaoChenLab/Rphenograph')"
+RUN Rscript -e "pak::pak('gu-lab20/MD-ALL')"
+
+# Copy the prediction script into the container
+COPY scripts/MDALL_predict.R /opt/scripts/MDALL_predict.R
+RUN chmod +x /opt/scripts/MDALL_predict.R
+
+# Set the working directory
 WORKDIR /opt
-
-# Copy your local R script and other files into the container's working directory
-COPY mdall /opt/mdall
-WORKDIR /opt/mdall
-
-# Install any R packages required by your script
-RUN install.packages(c("devtools", "BiocManager", "dplyr", "stringr", "Seurat", "ggplot2", "ggrepel", "cowplot", "umap"), repos='cran.rstudio.com')
-RUN BiocManager::install(c("DESeq2", "SingleR", "SummarizedExperiment"))
-RUN devtools::install_github("JinmiaoChenLab/Rphenograph")
-RUN devtools::install_github("gu-lab20/MD-ALL")
-
-ENV PATH="/opt/mdall/bin:${PATH}"
