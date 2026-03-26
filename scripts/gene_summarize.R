@@ -9,9 +9,10 @@ if (length(args) < 2) {
   cat("   or: Rscript gene_summarize.R [--gene-names] [--ignore-tx-version] --tx2gene <tx2gene.txt> <quant_file1> [quant_file2 ...]\n")
   cat("\nOptions:\n")
   cat("  --gene-names         Use gene names instead of gene IDs in output\n")
-  cat("  --ignore-tx-version  Strip version suffixes from transcript IDs in tx2gene\n")
-  cat("                       (e.g. ENST00000516118.1 -> ENST00000516118)\n")
-  cat("                       Use this when quant files lack version suffixes but the reference has them\n")
+  cat("  --ignore-tx-version  Strip version suffixes from transcript IDs\n")
+  cat("                       Handles both directions:\n")
+  cat("                         - quant has versions, tx2gene does not: stripped via ignoreTxVersion in tximport\n")
+  cat("                         - tx2gene has versions, quant does not: stripped from tx2gene directly\n")
   cat("\nOutput: gene_counts.tsv and gene_tpm.tsv in current directory\n")
   quit(status = 1)
 }
@@ -81,21 +82,29 @@ if (args[1] == "--tx2gene") {
   }
 }
 
-# Strip version suffixes from tx2gene transcript IDs if requested
+# If --ignore-tx-version, probe which side carries the versions and fix accordingly
 if (ignore_tx_version) {
-  cat("Stripping version suffixes from transcript IDs in tx2gene...\n")
-  before <- nrow(tx2gene)
-  tx2gene$TXNAME <- sub("\\.[0-9]+$", "", tx2gene$TXNAME)
-  tx2gene <- unique(tx2gene)  # Remove any duplicates created by stripping
-  cat(sprintf("tx2gene: %d -> %d rows after deduplication\n", before, nrow(tx2gene)))
+  tx2gene_has_version <- any(grepl("\\.[0-9]+$", head(tx2gene$TXNAME, 100)))
+
+  if (tx2gene_has_version) {
+    # tx2gene has versions, quant files do not: strip from tx2gene directly
+    cat("Detected version suffixes on tx2gene side — stripping from tx2gene transcript IDs...\n")
+    before <- nrow(tx2gene)
+    tx2gene$TXNAME <- sub("\\.[0-9]+$", "", tx2gene$TXNAME)
+    tx2gene <- unique(tx2gene)
+    cat(sprintf("tx2gene: %d -> %d rows after deduplication\n", before, nrow(tx2gene)))
+  } else {
+    # quant files have versions, tx2gene does not: let tximport handle it
+    cat("Detected version suffixes on quant file side — passing ignoreTxVersion = TRUE to tximport...\n")
+  }
 }
 
 #Set sample names from file names
 names(quant_files) <- gsub(".*/", "", gsub("\\..*$", "", quant_files))
 cat("Importing", length(quant_files), "quantification file(s)...\n")
 
-# ignoreTxVersion is always FALSE — stripping is handled above on tx2gene directly
-txi <- tximport(quant_files, type = "oarfish", tx2gene = tx2gene, ignoreTxVersion = FALSE)
+# ignoreTxVersion = TRUE only when flag set AND versions are on the quant file side
+txi <- tximport(quant_files, type = "oarfish", tx2gene = tx2gene, ignoreTxVersion = ignore_tx_version)
 
 #Write gene-level counts (rounded to integers)
 cat("Writing gene-level counts to gene_counts.tsv...\n")
