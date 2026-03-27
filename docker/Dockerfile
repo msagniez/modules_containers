@@ -26,8 +26,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /opt/models/
 RUN wget "https://zenodo.org/records/14167359/files/createdModelsMajority.rds?download=1"
 RUN wget "https://zenodo.org/records/14167359/files/createdModelsMinority.rds?download=1"
-RUN chmod +x createdModelsMinority.rds
-RUN chmod +x createdModelsMajority.rds
 
 WORKDIR /opt
 
