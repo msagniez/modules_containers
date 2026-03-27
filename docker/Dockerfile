@@ -30,7 +30,9 @@ RUN wget -O createdModelsMinority.rds "https://zenodo.org/records/14167359/files
 WORKDIR /opt
 
 # Install R packages layer by layer to respect dependency order
-RUN Rscript -e "install.packages(c('tidyverse','remotes'), repos = 'https://cran.rstudio.com/')"
+RUN Rscript -e "install.packages(c('tidyverse','remotes', 'BiocManager'), repos = 'https://cran.rstudio.com/')"
+RUN Rscript -e "BiocManager::install(version = '3.22')"
+RUN Rscript -e "BiocManager::install('impute', ask = FALSE)"
 RUN Rscript -e "remotes::install_github('princessmaximacenter/MnM', dependencies = T)"
 
 # Copy the prediction script into the container
