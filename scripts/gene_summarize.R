@@ -45,7 +45,7 @@ suppressPackageStartupMessages({
 if (args[1] == "--tx2gene") {
   tx2gene <- read.table(args[2], header = FALSE, col.names = c("TXNAME","GENEID"))
   quant_files <- args[3:length(args)]
-
+  
   if (use_gene_names) {
     cat("Warning: --gene-names option requires GTF file, not tx2gene file. Using gene IDs.\n")
     use_gene_names <- FALSE
@@ -53,31 +53,33 @@ if (args[1] == "--tx2gene") {
 } else {
   gtf_file <- args[1]
   quant_files <- args[2:length(args)]
-
+  
   cat("Creating transcript database from GTF...\n")
-  txdb <- txdbmaker::makeTxDbFromGFF(gtf_file)
-
+  suppressWarnings({
+    txdb <- txdbmaker::makeTxDbFromGFF(gtf_file)
+  })
+  
   k <- keys(txdb, keytype = "TXNAME")
   tx2gene <- select(txdb, keys = k, columns = "GENEID", keytype = "TXNAME")
   tx2gene <- tx2gene[, c("TXNAME", "GENEID")]
-
+  
   if (use_gene_names) {
     cat("Extracting gene names from GTF...\n")
     gtf_lines <- readLines(gtf_file)
     gtf_lines <- gtf_lines[!grepl("^#", gtf_lines)]
-
+    
     gene_id_pattern   <- 'gene_id "([^"]+)"'
     gene_name_pattern <- 'gene_name "([^"]+)"'
-
+    
     gene_ids   <- regmatches(gtf_lines, regexpr(gene_id_pattern,   gtf_lines))
     gene_ids   <- gsub('gene_id "|"', '', gene_ids)
-
+    
     gene_names <- regmatches(gtf_lines, regexpr(gene_name_pattern, gtf_lines))
     gene_names <- gsub('gene_name "|"', '', gene_names)
-
+    
     id2name <- data.frame(GENEID = gene_ids, GENENAME = gene_names, stringsAsFactors = FALSE)
     id2name <- unique(id2name[id2name$GENEID != "" & id2name$GENENAME != "", ])
-
+    
     cat("Found", nrow(id2name), "gene ID to name mappings\n")
   }
 }
@@ -88,20 +90,22 @@ if (ignore_tx_version) {
   cat("--ignore-tx-version set: stripping version suffixes from both tx2gene and quant file IDs...\n")
   before <- nrow(tx2gene)
   tx2gene$TXNAME <- sub("\\.[0-9]+$", "", tx2gene$TXNAME)
+  tx2gene$GENEID <- sub("\\.[0-9]+$", "", tx2gene$GENEID)
   tx2gene <- unique(tx2gene)
   cat(sprintf("tx2gene: %d -> %d rows after deduplication\n", before, nrow(tx2gene)))
   tximport_ignore_version <- TRUE
-
+  
 } else if (quant_has_version) {
   # Quant IDs have versions: keep tx2gene as-is to match
   cat("Quant IDs have versions — keeping tx2gene as-is\n")
   tximport_ignore_version <- FALSE
-
+  
 } else {
   # Quant IDs have no versions: strip versions from tx2gene to match
   cat("Quant IDs have no versions — stripping version suffixes from tx2gene to match...\n")
   before <- nrow(tx2gene)
   tx2gene$TXNAME <- sub("\\.[0-9]+$", "", tx2gene$TXNAME)
+  tx2gene$GENEID <- sub("\\.[0-9]+$", "", tx2gene$GENEID)
   tx2gene <- unique(tx2gene)
   cat(sprintf("tx2gene: %d -> %d rows after deduplication\n", before, nrow(tx2gene)))
   tximport_ignore_version <- FALSE
