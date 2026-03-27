@@ -84,6 +84,12 @@ if (args[1] == "--tx2gene") {
   }
 }
 
+#Detect whether quant files have version suffixes on transcript IDs
+first_quant <- read.table(quant_files[1], header = TRUE, nrow = 100)
+quant_ids <- as.character(first_quant[[1]])
+quant_has_version <- any(grepl("\\.[0-9]+$", quant_ids))
+cat(sprintf("quant_has_version = %s\n", quant_has_version))
+
 #Strip GeneIDs versions when needed
 if (ignore_tx_version) {
   # Strip versions from both sides unconditionally
