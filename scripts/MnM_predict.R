@@ -22,8 +22,8 @@ suppressPackageStartupMessages({
 countDataTest <- read.csv(quant, header = T, row.names = 1, sep = "\t") %>% as.matrix()
 
 #Load pre-trained models
-modelsMinority <- readRDS("./resources/createdModelsMinority.rds")
-modelsMajority <- readRDS("./resources/createdModelsMajority.rds")
+modelsMinority <- readRDS("/opt/models/createdModelsMinority.rds")
+modelsMajority <- readRDS("/opt/models/createdModelsMajority.rds")
 
 #Run MnM predictions
 predictionsTestMinority <- newPredictionsMinority(createdModelsMinority = modelsMinority,

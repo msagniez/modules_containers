@@ -1,5 +1,7 @@
 FROM rocker/r-ver:4.5.0
 
+
+
 RUN apt-get update && apt-get install -y \
     cmake \
     libcurl4-gnutls-dev \
@@ -17,7 +19,17 @@ RUN apt-get update && apt-get install -y \
     libglpk-dev \
     pandoc \
     pkg-config \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /opt/models/
+RUN wget "https://zenodo.org/records/14167359/files/createdModelsMajority.rds?download=1"
+RUN wget "https://zenodo.org/records/14167359/files/createdModelsMinority.rds?download=1"
+RUN chmod +x createdModelsMinority.rds
+RUN chmod +x createdModelsMajority.rds
+
+WORKDIR /opt
 
 # Install R packages layer by layer to respect dependency order
 RUN Rscript -e "install.packages(c('tidyverse','remotes'), repos = 'https://cran.rstudio.com/')"

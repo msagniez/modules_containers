@@ -16,7 +16,7 @@ process MNM_PREDICT {
     def outdir = "${task.workDir}/${meta.id}"
     """
 
-    Rscript ${projectDir}/scripts/MnM_predict.R \\
+    Rscript /opt/scripts/MnM_predict.R \\
         ${quant_file} \\
         ${outdir}
     """
