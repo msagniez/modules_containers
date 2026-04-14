@@ -20,5 +20,5 @@ RUN wget -O sample_example.tsv "https://nextcloud.computecanada.ca/index.php/s/s
 WORKDIR /opt/
 
 #Copy the prediction script into the container
-COPY scripts/Maylis_predict.py /opt/Maylis_predict.py
-RUN chmod +x /opt/Maylis_predict.py
+COPY scripts/Maylis_predict.py /opt/scripts/Maylis_predict.py
+RUN chmod +x /opt/scripts/Maylis_predict.py
