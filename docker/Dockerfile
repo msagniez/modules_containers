@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libgit2-dev \
     python3 \
     python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python libraries to run format_matrix.py ; call with "/opt/venv/bin/python3 /opt/scripts/format_matrix.py ..."
