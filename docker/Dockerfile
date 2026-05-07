@@ -11,11 +11,9 @@ RUN apt-get update && apt-get install -y \
 RUN git clone https://github.com/Maggi-Chen/FusionSeeker.git /opt/fusionseeker
 
 # Install conda dependencies into base environment
-RUN conda install -c bioconda -c conda-forge \
-    minimap2=2.24 \
-    pysam=0.17 \
-    samtools=1.9 \
-    -y
+RUN mamba install -c bioconda -c conda-forge samtools=1.9 -y
+RUN mamba install -c bioconda -c conda-forge minimap2=2.24 -y
+RUN mamba install -c bioconda -c conda-forge pysam=0.17 -y
 
 # Build bsalign and install to /usr/local/bin
 RUN git clone https://github.com/ruanjue/bsalign.git /opt/bsalign
