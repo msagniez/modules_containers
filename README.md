@@ -1,15 +1,16 @@
 # Container and workflow module repository
 
-## CI/CD
-
-[![Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg)]
 
 ## Modules Status
 
 | Branch Name | Build Status | Last Commit Date |
 |-------------|--------------|-------------------|
-| [tximport](https://github.com/msagniez/modules_containers/tree/tximport) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=tximport)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Atximport) | 2026-03-27 14:52:00 +0000 |
-| [MD-ALL](https://github.com/msagniez/modules_containers/tree/mdall) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=mdall)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Amdall) | 2026-03-26 15:02:00 +0000 |
-| [ALLcatchR](https://github.com/msagniez/modules_containers/tree/ALLcatchR) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=ALLcatchR)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AALLcatchR) | 2026-03-25 11:37:00 +0000 |
-| [MnM](https://github.com/msagniez/modules_containers/tree/MnM) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=MnM)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AMnM) | 2026-03-27 16:20:00 +0000 |
-| [Maylis](https://github.com/msagniez/modules_containers/tree/Maylis) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=Maylis)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AMaylis) | 2026-04-14 15:14:00 +0000 |
+| [tximport](https://github.com/msagniez/modules_containers/tree/tximport) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=tximport)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Atximport) | 2026-03-27 |
+| [MD-ALL](https://github.com/msagniez/modules_containers/tree/mdall) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=mdall)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Amdall) | 2026-03-26 |
+| [ALLcatchR](https://github.com/msagniez/modules_containers/tree/ALLcatchR) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=ALLcatchR)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AALLcatchR) | 2026-03-25 |
+| [MnM](https://github.com/msagniez/modules_containers/tree/MnM) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=MnM)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AMnM) | 2026-03-27 |
+| [Maylis](https://github.com/msagniez/modules_containers/tree/Maylis) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=Maylis)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AMaylis) | 2026-04-14 |
+| [AMLmapR](https://github.com/msagniez/modules_containers/tree/AMLmapR) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=AMLmapR)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AAMLmapR) | 2026-05-07 |
+| [AttentionAML](https://github.com/msagniez/modules_containers/tree/AttentionAML) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=AttentionAML)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AAttentionAML) |            |
+| [FUSILLI](https://github.com/msagniez/modules_containers/tree/FUSILLI) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=FUSILLI)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AFUSILLI) | 2026-05-07 |
+| [FusionSeeker](https://github.com/msagniez/modules_containers/tree/FusionSeeker) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=FusionSeeker)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3AFusionSeeker) | 2026-05-07 |
