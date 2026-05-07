@@ -15,7 +15,7 @@ RUN python3 -m venv /opt/venv
 RUN /opt/venv/bin/pip install pandas numpy
 
 # Install R libraries
-RUN R -e "install.packages(c('devtools', 'caret'), repos='https://cloud.r-project.org')"
+RUN R -e "install.packages(c('devtools', 'caret', 'kernlab'), repos='https://cloud.r-project.org')"
 RUN R -e "devtools::install_github('jeppeseverens/AMLmapR')"
 
 WORKDIR /opt/
