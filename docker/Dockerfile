@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y \
     git \
     make \
     gcc \
+    g++ \
+    build-essential \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the repository
