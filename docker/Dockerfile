@@ -9,8 +9,9 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python libraries to run format_matrix.py
-RUN pip3 install --break-system-packages pandas numpy
+# Install python libraries to run format_matrix.py ; call with "/opt/venv/bin/python3 /opt/scripts/format_matrix.py ..."
+RUN python3 -m venv /opt/venv
+RUN /opt/venv/bin/pip install pandas numpy
 
 # Install R libraries
 RUN R -e "install.packages(c('devtools', 'caret'), repos='https://cloud.r-project.org')"
