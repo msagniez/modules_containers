@@ -12,7 +12,19 @@ Example:
 """
 
 import sys
+import torch
 import pandas as pd
+
+# --- Fix for CPU-only environments ---
+_original_torch_load = torch.load
+
+def _cpu_safe_torch_load(f, map_location=None, **kwargs):
+    if map_location is None:
+        map_location = torch.device('cpu')
+    return _original_torch_load(f, map_location=map_location, **kwargs)
+
+torch.load = _cpu_safe_torch_load
+# -------------------------------------
 
 # Add AttentionAML to path
 sys.path.append('AttentionAML')
