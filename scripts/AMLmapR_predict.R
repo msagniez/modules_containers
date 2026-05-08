@@ -28,7 +28,8 @@ storage.mode(df_matrix) <- "integer"
 
 #Predict using AMLmapR
 predictions <- predict_AML_clusters(df_matrix)
+predictions_df <- as.data.frame(predictions)
 
 #Save results
-out_name <- paste(outdir,"/","AMLmapR_predictions.csv",sep="",collapse=NULL)
-write.table(predictions, out_name, row.names = FALSE, col.names = TRUE, sep = ",", quote = FALSE)
+out_name <- paste(outdir, "/", "AMLmapR_predictions.csv", sep="", collapse=NULL)
+write.table(predictions_df, out_name, row.names = FALSE, col.names = TRUE, sep = ",", quote = FALSE)
