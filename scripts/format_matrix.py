@@ -230,4 +230,69 @@ def format_matrix(input_file, reference_file, output_file,
         zeros_df = pd.DataFrame(
             0.0,
             index=output_df.index,
-            columns=missin
+            columns=missing_genes
+        )
+        output_df = pd.concat([output_df, zeros_df], axis=1)
+
+    # Reorder to match reference
+    output_df = output_df[reference_genes]
+
+    if ref_orientation == 'rows':
+        output_df = output_df.T
+        print(f"\nTransposing output to match reference format (genes as rows)")
+
+    print(f"\nSaving formatted matrix to: {output_file}")
+    print(f"Output file format: {ref_format.upper()} (matching reference)")
+    write_matrix(output_df, output_file, ref_format)
+    print(f"✓ Output matrix saved with {output_df.shape[0]} rows and {output_df.shape[1]} columns")
+
+    if missing_genes:
+        print(f"\nNote: {len(missing_genes)} genes were added with zero values")
+        preview = missing_genes[:10]
+        suffix = '...' if len(missing_genes) > 10 else ''
+        print(f"{'First 10 m' if suffix else 'M'}issing genes: {', '.join(preview)}{suffix}")
+
+    if extra_genes:
+        print(f"\nNote: {len(extra_genes)} extra genes were removed")
+        preview = extra_genes[:10]
+        suffix = '...' if len(extra_genes) > 10 else ''
+        print(f"First 10 removed genes: {', '.join(preview)}{suffix}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Format input matrix to match AttentionAML reference format.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 format_matrix.py my_data.csv TPM_test_format.csv formatted_output.csv
+  python3 format_matrix.py my_data.tsv TPM_test_format.tsv formatted_output.tsv --gene-id-col gene_symbol
+  python3 format_matrix.py my_data.csv ref.csv out.csv --strip-versions
+        """
+    )
+    parser.add_argument('input_file',      help='Path to input matrix (CSV or TSV)')
+    parser.add_argument('reference_file',  help='Path to reference format (CSV or TSV)')
+    parser.add_argument('output_file',     help='Path to save formatted output')
+    parser.add_argument('--gene-id-col',   help='Column name for gene IDs (if genes are in rows)', default=None)
+    parser.add_argument('--strip-versions',
+                        action='store_true',
+                        help='Ignore Ensembl version suffixes when matching genes '
+                             '(e.g. treats ENSG00000000003.17 and ENSG00000000003.15 as the same gene)')
+
+    args = parser.parse_args()
+
+    try:
+        format_matrix(args.input_file, args.reference_file, args.output_file,
+                      args.gene_id_col, args.strip_versions)
+    except FileNotFoundError as e:
+        print(f"Error: File not found - {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
