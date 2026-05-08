@@ -24,7 +24,7 @@ suppressPackageStartupMessages({
 #Load matrix
 quant_df <- read.table(quant, sep=",", header = T, row.names = 1)
 df_matrix <- as.matrix(quant_df[,colnames(quant_df)])
-storage.mode(df_matrix) <- "integer"
+#storage.mode(df_matrix) <- "integer"
 
 #Predict using AMLmapR
 predictions <- predict_AML_clusters(df_matrix)
