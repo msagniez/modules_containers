@@ -33,5 +33,5 @@ RUN chmod +x /opt/scripts/plot_classification_summary.R
 COPY scripts/run_classif_summary.sh  /opt/scripts/run_classif_summary.sh
 RUN chmod +x /opt/scripts/run_classif_summary.sh
 
-ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
+ENTRYPOINT ["/opt/scripts/run_classif_summary.sh"]
 CMD ["Classification-summary"]
