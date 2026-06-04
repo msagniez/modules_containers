@@ -20,6 +20,7 @@ Output columns: Sample, classifier, subtype, score
 
 import argparse
 import os
+import re
 import pandas as pd
 
 
@@ -225,23 +226,6 @@ def parse_signature(results_dir: str) -> pd.DataFrame:
     return result.reset_index(drop=True)
 
 
-def parse_maylis(results_dir: str) -> pd.DataFrame:
-    """
-    Maylis_results.csv
-    Columns: Sample, Subgroup_def, Subgroup_fr, Probability   (Probability is 0-100)
-    """
-    path = os.path.join(results_dir, "Maylis_results.csv")
-    df = pd.read_csv(path)
-    rows = []
-    for _, r in df.iterrows():
-        sample = str(r["Sample"]).strip()
-        subtype = str(r["Subgroup_fr"]).strip()
-        score = round(float(r["Probability"]) / 100.0, 9)
-        rows.append({"Sample": sample, "classifier": "Maylis",
-                     "subtype": subtype, "score": score})
-    return pd.DataFrame(rows)
-
-
 def parse_amlmapr(results_dir: str) -> pd.DataFrame:
     """
     AMLmapR_predictions.csv
@@ -296,18 +280,37 @@ def parse_attentionaml(results_dir: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def parse_maylis(results_dir: str) -> pd.DataFrame:
+    """
+    Maylis_results.csv
+    Columns: Sample, Subgroup_def, Subgroup_fr, Probability   (Probability is 0-100)
+    """
+    path = os.path.join(results_dir, "Maylis_results.csv")
+    df = pd.read_csv(path)
+    rows = []
+    for _, r in df.iterrows():
+        sample = str(r["Sample"]).strip()
+        subtype = str(r["Subgroup_fr"]).strip()
+        score = round(float(r["Probability"]) / 100.0, 9)
+        rows.append({"Sample": sample, "classifier": "Maylis",
+                     "subtype": subtype, "score": score})
+    return pd.DataFrame(rows)
+
+
 # ---------------------------------------------------------------------------
-# Main
+# Parser registry  —  (classifier_subdir, results_subdir, parser_function)
+# Entries are skipped silently when the classifier directory is absent,
+# so the script works regardless of which classifiers were actually run.
 # ---------------------------------------------------------------------------
 
 PARSERS = [
-    ("ALLcatchR/results", parse_allcatchr_lineage),
-    ("ALLcatchR/results", parse_allcatchr_subtype),
-    ("MD-ALL/results",    parse_md_all),
-    ("MnM/results",       parse_mnm_lineage),
-    ("MnM/results",       parse_mnm_subtype),
-    ("SIGNATURE/results", parse_signature),
-    ("Maylis/results",    parse_maylis),
+    ("ALLcatchR",   "results", parse_allcatchr_lineage),
+    ("ALLcatchR",   "results", parse_allcatchr_subtype),
+    ("MD-ALL",      "results", parse_md_all),
+    ("MnM",         "results", parse_mnm_lineage),
+    ("MnM",         "results", parse_mnm_subtype),
+    ("SIGNATURE",   "results", parse_signature),
+    ("Maylis",      "results", parse_maylis),
     ("AMLmapR",     "results", parse_amlmapr),
     ("AttentionAML","results", parse_attentionaml),
 ]
@@ -346,7 +349,7 @@ def build_summary(classifiers_dir: str) -> pd.DataFrame:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build MPXXXX_Classification-summary.csv from classifier subdirectories."
+        description="Rebuild MP3531_Classification-summary.csv from classifier subdirectories."
     )
     parser.add_argument(
         "--classifiers-dir", "-d",
@@ -355,8 +358,8 @@ def main():
     )
     parser.add_argument(
         "--output", "-o",
-        default="MPXXXX_Classification-summary.csv",
-        help="Output CSV path (default: MPXXXX_Classification-summary.csv)"
+        default="MP3531_Classification-summary.csv",
+        help="Output CSV path (default: MP3531_Classification-summary.csv)"
     )
     args = parser.parse_args()
 
