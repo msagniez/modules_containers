@@ -34,4 +34,4 @@ COPY scripts/run_classif_summary.sh  /opt/scripts/run_classif_summary.sh
 RUN chmod +x /opt/scripts/run_classif_summary.sh
 
 ENTRYPOINT ["/opt/scripts/run_classif_summary.sh"]
-CMD ["Classification-summary"]
+CMD ["Classif-summary"]
