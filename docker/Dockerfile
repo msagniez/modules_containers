@@ -26,8 +26,8 @@ RUN Rscript -e "install.packages('ggplot2', repos='https://cloud.r-project.org')
 WORKDIR /opt/
 
 # Copy the prediction script into the container
-COPY scripts/build_classif_summary.py  /opt/scripts/build_classif_summary.py
-RUN chmod +x /opt/scripts/build_classif_summary.py
+COPY scripts/build_classification_summary.py  /opt/scripts/build_classification_summary.py
+RUN chmod +x /opt/scripts/build_classification_summary.py
 COPY scripts/plot_classification_summary.R  /opt/scripts/plot_classification_summary.R
 RUN chmod +x /opt/scripts/plot_classification_summary.R
 COPY scripts/run_classif_summary.sh  /opt/scripts/run_classif_summary.sh
