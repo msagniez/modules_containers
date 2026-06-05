@@ -149,8 +149,8 @@ for (file_path in file_list) {
 }
 
 #Save results (without row names, with column names)
-out_name <- paste(outdir,"/","MD-ALL_predictions.csv",sep="",collapse=NULL)
-write.table(df_results, out_name, row.names = FALSE, col.names = TRUE, sep = ",", quote = FALSE)
+out_name <- paste(outdir,"/","MD-ALL_predictions.tsv",sep="",collapse=NULL)
+write.table(df_results, out_name, row.names = FALSE, col.names = TRUE, sep = "\t", quote = FALSE)
 
 # Report on failed samples
 if (length(failed_samples) > 0) {
