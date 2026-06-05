@@ -144,13 +144,13 @@ def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
 
 def parse_md_all(results_dir: str) -> pd.DataFrame:
     """
-    MD-ALL_predictions.csv
+    MD-ALL_predictions.tsv
     Columns: id, PhenoGraph_pred, PhenoGraph_predScore, PhenoGraph_predLabel,
              svm_pred, svm_predScore, svm_predLabel
     Emits two rows per sample: MD-ALL_phenograph and MD-ALL_svm.
     """
-    path = os.path.join(results_dir, "MD-ALL_predictions.csv")
-    df = pd.read_csv(path)
+    path = os.path.join(results_dir, "MD-ALL_predictions.tsv")
+    df = pd.read_csv(path, sep="\t")
     rows = []
     for _, r in df.iterrows():
         sample = str(r["id"]).strip()
