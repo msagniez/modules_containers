@@ -133,6 +133,7 @@ def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
     """
     lineage_path, lineage_sep = _allcatchr_path(results_dir, "lineage")
     lineage_df   = pd.read_csv(lineage_path, sep=lineage_sep)
+    lineage_df = lineage_df.rename(columns={"sample": "Sample"})  # normalise case
     lineage_map  = {
         str(r["Sample"]).strip(): str(r["prediction"]).strip()
         for _, r in lineage_df.iterrows()
