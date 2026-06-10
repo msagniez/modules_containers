@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rebuilds MPXXXX_Classification-summary.csv from classifier subdirectories.
+Rebuilds MP3531_Classification-summary.csv from classifier subdirectories.
 
 Expected directory layout (relative to --classifiers-dir):
   ALLcatchR/results/ALLcatchR_lineage_results.csv
@@ -19,6 +19,7 @@ Output columns: Sample, classifier, subtype, score
 """
 
 import argparse
+import csv as _csv
 import os
 import re
 import pandas as pd
@@ -38,27 +39,65 @@ def normalise_sample_name(name: str) -> str:
     return name
 
 
+# ALLcatchR filename conventions
+#   new: ALLcatchR_lineage_results.csv / ALLcatchR_ball_results.csv / ALLcatchR_tall_results.csv
+#   old: gene_counts_lineage-prediction.tsv / gene_counts_ball-prediction.tsv / gene_counts_tall-prediction.tsv
+_ALLCATCHR_NAMES = {
+    "lineage": [
+        "ALLcatchR_lineage_results.csv",
+        "gene_counts_lineage-prediction.tsv",
+    ],
+    "ball": [
+        "ALLcatchR_ball_results.csv",
+        "gene_counts_ball-prediction.tsv",
+    ],
+    "tall": [
+        "ALLcatchR_tall_results.csv",
+        "gene_counts_tall-prediction.tsv",
+    ],
+}
+
+def _allcatchr_path(results_dir: str, key: str) -> tuple[str, str]:
+    """
+    Return (path, sep) for the requested ALLcatchR file (key: lineage/ball/tall).
+    Tries each known filename in order and returns the first one that exists.
+    Raises FileNotFoundError listing all candidates if none is found.
+    """
+    candidates = _ALLCATCHR_NAMES[key]
+    for fname in candidates:
+        path = os.path.join(results_dir, fname)
+        if os.path.exists(path):
+            sep = "\t" if fname.endswith(".tsv") else ","
+            return path, sep
+    checked = ", ".join(candidates)
+    raise FileNotFoundError(
+        f"ALLcatchR {key} file not found in {results_dir}. Tried: {checked}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Per-classifier parsers
 # ---------------------------------------------------------------------------
 
 def parse_allcatchr_lineage(results_dir: str) -> pd.DataFrame:
     """
-    ALLcatchR_lineage_results.csv
+    ALLcatchR lineage file — two naming conventions supported:
+      - ALLcatchR_lineage_results.csv  (newer runs)
+      - gene_counts_lineage-prediction.tsv  (older runs)
     Columns: Sample, sample, B-ALL, T-ALL, prediction
-    Score = max(B-ALL, T-ALL)
+    Score = winning class probability; for Unclassified, the higher of the two.
     """
-    path = os.path.join(results_dir, "ALLcatchR_lineage_results.csv")
-    df = pd.read_csv(path)
+    path, sep = _allcatchr_path(results_dir, "lineage")
+    df = pd.read_csv(path, sep=sep)
     rows = []
     for _, r in df.iterrows():
-        sample = str(r["Sample"]).strip()
+        sample  = str(r["Sample"]).strip()
         subtype = str(r["prediction"]).strip()
-        score = max(float(r["B-ALL"]), float(r["T-ALL"]))
-        # Mirror the summary: score is the winning class probability
-        score = float(r["B-ALL"]) if subtype == "B-ALL" else float(r["T-ALL"])
-        # Unclassified: use the higher of the two
-        if subtype == "Unclassified":
+        if subtype == "B-ALL":
+            score = float(r["B-ALL"])
+        elif subtype == "T-ALL":
+            score = float(r["T-ALL"])
+        else:
             score = max(float(r["B-ALL"]), float(r["T-ALL"]))
         rows.append({"Sample": sample, "classifier": "ALLcatchR_lineage",
                      "subtype": subtype, "score": round(score, 9)})
@@ -67,99 +106,108 @@ def parse_allcatchr_lineage(results_dir: str) -> pd.DataFrame:
 
 def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
     """
-    Routes each sample to the correct subtype file based on ALLcatchR lineage:
-      - B-ALL (or Unclassified) → ALLcatchR_ball_results.csv
-        Columns of interest: Sample, Score, Prediction
-      - T-ALL                   → ALLcatchR_tall_results.csv
-        Columns of interest: Sample, BC_pred  (the main-cluster prediction string,
-        e.g. "C8 (BCL11B)"), plus the per-cluster probability columns to derive
-        the winning score.
+    Routes each sample to the correct subtype file based on ALLcatchR lineage.
+    Two naming conventions are supported for each file:
+      - ALLcatchR_ball_results.csv / gene_counts_ball-prediction.tsv  (B-ALL)
+      - ALLcatchR_tall_results.csv / gene_counts_tall-prediction.tsv  (T-ALL)
     """
-    # --- Load lineage predictions to build a per-sample routing map -----------
-    lineage_path = os.path.join(results_dir, "ALLcatchR_lineage_results.csv")
-    lineage_df = pd.read_csv(lineage_path)
-    lineage_map = {
+    lineage_path, lineage_sep = _allcatchr_path(results_dir, "lineage")
+    lineage_df   = pd.read_csv(lineage_path, sep=lineage_sep)
+    lineage_map  = {
         str(r["Sample"]).strip(): str(r["prediction"]).strip()
         for _, r in lineage_df.iterrows()
     }
 
     rows = []
 
-    # --- B-ALL subtype (also used for Unclassified) ---------------------------
-    ball_path = os.path.join(results_dir, "ALLcatchR_ball_results.csv")
-    ball_df = pd.read_csv(ball_path)
+    # B-ALL / Unclassified
+    ball_path, ball_sep = _allcatchr_path(results_dir, "ball")
+    ball_df   = pd.read_csv(ball_path, sep=ball_sep)
     for _, r in ball_df.iterrows():
-        sample = str(r["Sample"]).strip()
+        sample  = str(r["Sample"]).strip()
         lineage = lineage_map.get(sample, "Unclassified")
         if lineage == "T-ALL":
-            continue  # will be handled by the T-ALL block below
+            continue
         rows.append({"Sample": sample, "classifier": "ALLcatchR_subtype",
                      "subtype": str(r["Prediction"]).strip(),
-                     "score": round(float(r["Score"]), 9)})
+                     "score":   round(float(r["Score"]), 9)})
 
-    # --- T-ALL subtype --------------------------------------------------------
-    # BC_pred contains the winning cluster label (or empty string if none).
-    # The per-cluster probability columns are named like "C1 (TAL1 ...)", "C2 ...", etc.
-    # We derive the score as the probability of the winning cluster.
-    tall_path = os.path.join(results_dir, "ALLcatchR_tall_results.csv")
-    tall_df = pd.read_csv(tall_path)
-
-    # Identify the numeric cluster-probability columns (all columns between
-    # "C1 (...)" and the last "C..." column, i.e. everything before the
-    # non-numeric annotation columns that follow).
+    # T-ALL
+    tall_path, tall_sep = _allcatchr_path(results_dir, "tall")
+    tall_df      = pd.read_csv(tall_path, sep=tall_sep)
     cluster_cols = [c for c in tall_df.columns
-                    if c.startswith("C") and c not in ("BC_pred",)]
+                    if c.startswith("C") and c != "BC_pred"]
 
     for _, r in tall_df.iterrows():
-        sample = str(r["Sample"]).strip()
+        sample  = str(r["Sample"]).strip()
         lineage = lineage_map.get(sample, "Unclassified")
         if lineage != "T-ALL":
-            continue  # only process samples called T-ALL by the lineage step
+            continue
 
         bc_pred = str(r.get("BC_pred", "")).strip()
         subtype = bc_pred if bc_pred else "Unclassified"
 
-        # Score = probability of the predicted cluster, or 0 if not found
         score = 0.0
         if bc_pred and cluster_cols:
-            # BC_pred may contain multiple entries separated by ";"
-            # e.g. "C13 (NUP214, MLLT10, KMT2A);C8 (BCL11B)"
-            # Take the first one as the primary call
             primary = bc_pred.split(";")[0].strip()
-            # Find the matching column (exact match)
             if primary in tall_df.columns:
-                val = r[primary]
+                val   = r[primary]
                 score = float(val) if pd.notna(val) else 0.0
             else:
-                # Fall back to the highest probability across all cluster cols
-                vals = pd.to_numeric(r[cluster_cols], errors="coerce")
+                vals  = pd.to_numeric(r[cluster_cols], errors="coerce")
                 score = float(vals.max()) if not vals.isna().all() else 0.0
 
         rows.append({"Sample": sample, "classifier": "ALLcatchR_subtype",
-                     "subtype": subtype,
-                     "score": round(score, 9)})
+                     "subtype": subtype, "score": round(score, 9)})
 
     return pd.DataFrame(rows)
 
 
 def parse_md_all(results_dir: str) -> pd.DataFrame:
     """
-    MD-ALL_predictions.tsv
-    Columns: id, PhenoGraph_pred, PhenoGraph_predScore, PhenoGraph_predLabel,
-             svm_pred, svm_predScore, svm_predLabel
-    Emits two rows per sample: MD-ALL_phenograph and MD-ALL_svm.
+    MD-ALL_predictions.csv
+    Nominal columns: id, PhenoGraph_pred, PhenoGraph_predScore, PhenoGraph_predLabel,
+                     svm_pred, svm_predScore, svm_predLabel
+
+    The *predLabel columns contain embedded commas
+    (e.g. "PAX5alt,9(0.82)|PAX5::ETV6,2(0.18)") which breaks standard CSV
+    parsing and shifts all subsequent column indices.
+
+    Strategy: read line-by-line with csv.reader, anchor on fixed left-side
+    positions (id=0, phenograph_pred=1, phenograph_score=2) and scan
+    right-to-left for the first parseable float to locate svm_predScore,
+    with svm_pred one field to its left.
     """
-    path = os.path.join(results_dir, "MD-ALL_predictions.tsv")
-    df = pd.read_csv(path, sep="\t")
+    path = os.path.join(results_dir, "MD-ALL_predictions.csv")
     rows = []
-    for _, r in df.iterrows():
-        sample = str(r["id"]).strip()
-        rows.append({"Sample": sample, "classifier": "MD-ALL_phenograph",
-                     "subtype": str(r["PhenoGraph_pred"]).strip(),
-                     "score": round(float(r["PhenoGraph_predScore"]), 9)})
-        rows.append({"Sample": sample, "classifier": "MD-ALL_svm",
-                     "subtype": str(r["svm_pred"]).strip(),
-                     "score": round(float(r["svm_predScore"]), 9)})
+    with open(path, newline="") as fh:
+        reader = _csv.reader(fh)
+        next(reader)  # skip header
+        for fields in reader:
+            if len(fields) < 7:
+                continue
+            sample           = fields[0].strip()
+            phenograph_pred  = fields[1].strip()
+            phenograph_score = float(fields[2])
+
+            # Scan right-to-left for svm_predScore
+            svm_pred  = None
+            svm_score = None
+            for i in range(len(fields) - 1, 3, -1):
+                try:
+                    svm_score = float(fields[i])
+                    svm_pred  = fields[i - 1].strip()
+                    break
+                except ValueError:
+                    continue
+
+            rows.append({"Sample": sample, "classifier": "MD-ALL_phenograph",
+                         "subtype": phenograph_pred,
+                         "score":   round(phenograph_score, 9)})
+            if svm_pred is not None:
+                rows.append({"Sample": sample, "classifier": "MD-ALL_svm",
+                             "subtype": svm_pred,
+                             "score":   round(svm_score, 9)})
     return pd.DataFrame(rows)
 
 
@@ -169,37 +217,37 @@ def parse_mnm_lineage(results_dir: str) -> pd.DataFrame:
     Columns: (row name), predict, probability1, predict2, probability2, ...
     """
     path = os.path.join(results_dir, "MnM_lineage-predictions.csv")
-    df = pd.read_csv(path, index_col=0)
+    df   = pd.read_csv(path, index_col=0)
     rows = []
     for idx, r in df.iterrows():
         sample = normalise_sample_name(idx)
         rows.append({"Sample": sample, "classifier": "MnM_lineage",
                      "subtype": str(r["predict"]).strip(),
-                     "score": round(float(r["probability1"]), 9)})
+                     "score":   round(float(r["probability1"]), 9)})
     return pd.DataFrame(rows)
 
 
 def parse_mnm_subtype(results_dir: str) -> pd.DataFrame:
     """
-    MnM_subtype-predictions.csv — same layout as lineage file.
+    MnM_subtype-predictions.csv -- same layout as lineage file.
     """
     path = os.path.join(results_dir, "MnM_subtype-predictions.csv")
-    df = pd.read_csv(path, index_col=0)
+    df   = pd.read_csv(path, index_col=0)
     rows = []
     for idx, r in df.iterrows():
         sample = normalise_sample_name(idx)
         rows.append({"Sample": sample, "classifier": "MnM_subtype",
                      "subtype": str(r["predict"]).strip(),
-                     "score": round(float(r["probability1"]), 9)})
+                     "score":   round(float(r["probability1"]), 9)})
     return pd.DataFrame(rows)
 
 
 def parse_signature(results_dir: str) -> pd.DataFrame:
     """
-    SIGNATURE_B_predictions.csv  and  SIGNATURE_T_predictions.csv
+    SIGNATURE_B_predictions.csv and SIGNATURE_T_predictions.csv
     Format: rows = signature names, columns = sample names.
     For each sample, pick the signature with the highest score.
-    B and T files cover different (possibly overlapping) samples; merge both.
+    If a sample appears in both files, keep the higher-scoring entry.
     """
     rows = []
     for fname in ("SIGNATURE_B_predictions.csv", "SIGNATURE_T_predictions.csv"):
@@ -208,22 +256,22 @@ def parse_signature(results_dir: str) -> pd.DataFrame:
             continue
         df = pd.read_csv(path, index_col=0)
         for col in df.columns:
-            sample = normalise_sample_name(col)
-            best_idx = df[col].astype(float).idxmax()
+            sample     = normalise_sample_name(col)
+            best_idx   = df[col].astype(float).idxmax()
             best_score = float(df[col][best_idx])
             rows.append({"Sample": sample, "classifier": "SIGNATURE",
                          "subtype": str(best_idx).strip(),
-                         "score": round(best_score, 9)})
+                         "score":   round(best_score, 9)})
 
-    # If a sample appeared in both B and T files, keep the one with the higher score
     result = pd.DataFrame(rows)
     if result.empty:
         return result
     result = (result
               .sort_values("score", ascending=False)
               .drop_duplicates(subset="Sample")
-              .sort_index())
-    return result.reset_index(drop=True)
+              .sort_index()
+              .reset_index(drop=True))
+    return result
 
 
 def parse_amlmapr(results_dir: str) -> pd.DataFrame:
@@ -231,25 +279,20 @@ def parse_amlmapr(results_dir: str) -> pd.DataFrame:
     AMLmapR_predictions.csv
     Columns: AML.MRC.1., ..., prediction, pass_cutoff, sample_id
     Score = the numeric value of the predicted subtype column.
-    Subtype label is taken from the 'prediction' column as-is.
     """
-    path = os.path.join(results_dir, "AMLmapR_predictions.csv")
-    df = pd.read_csv(path)
-    # Numeric score columns are everything except the last three meta columns
-    score_cols = [c for c in df.columns if c not in ("prediction", "pass_cutoff", "sample_id")]
+    path       = os.path.join(results_dir, "AMLmapR_predictions.csv")
+    df         = pd.read_csv(path)
+    score_cols = [c for c in df.columns
+                  if c not in ("prediction", "pass_cutoff", "sample_id")]
     rows = []
     for _, r in df.iterrows():
-        sample = str(r["sample_id"]).strip()
+        sample  = str(r["sample_id"]).strip()
         subtype = str(r["prediction"]).strip()
-        # The score column name uses dots instead of special chars (R convention)
-        # Try to find the matching score column by exact name first, then fuzzy
-        score = float("nan")
+        score   = float("nan")
         if subtype in score_cols:
             score = float(r[subtype])
         else:
-            # Map subtype back to column name: replace non-alphanumeric with '.'
             candidate = re.sub(r"[^A-Za-z0-9]", ".", subtype)
-            # Try exact and trailing-dot variants
             for col in score_cols:
                 if col == candidate or col == candidate + ".":
                     score = float(r[col])
@@ -262,19 +305,16 @@ def parse_amlmapr(results_dir: str) -> pd.DataFrame:
 def parse_attentionaml(results_dir: str) -> pd.DataFrame:
     """
     AttentionAML_predictions.csv
-    Columns: Samples, Subtype_pred, Probabolity  (typo in header is intentional)
+    Columns: Samples, Subtype_pred, Probabolity  (typo in source header)
     """
     path = os.path.join(results_dir, "AttentionAML_predictions.csv")
-    df = pd.read_csv(path)
+    df   = pd.read_csv(path)
     rows = []
     for _, r in df.iterrows():
-        sample = str(r["Samples"]).strip()
+        sample  = str(r["Samples"]).strip()
         subtype = str(r["Subtype_pred"]).strip()
-        # Handle the typo gracefully — check both spellings
-        if "Probabolity" in df.columns:
-            score = float(r["Probabolity"])
-        else:
-            score = float(r["Probability"])
+        score   = float(r["Probabolity"] if "Probabolity" in df.columns
+                        else r["Probability"])
         rows.append({"Sample": sample, "classifier": "AttentionAML",
                      "subtype": subtype, "score": round(score, 9)})
     return pd.DataFrame(rows)
@@ -283,36 +323,36 @@ def parse_attentionaml(results_dir: str) -> pd.DataFrame:
 def parse_maylis(results_dir: str) -> pd.DataFrame:
     """
     Maylis_results.csv
-    Columns: Sample, Subgroup_def, Subgroup_fr, Probability   (Probability is 0-100)
+    Columns: Sample, Subgroup_def, Subgroup_fr, Probability  (0-100 scale)
     """
     path = os.path.join(results_dir, "Maylis_results.csv")
-    df = pd.read_csv(path)
+    df   = pd.read_csv(path)
     rows = []
     for _, r in df.iterrows():
-        sample = str(r["Sample"]).strip()
+        sample  = str(r["Sample"]).strip()
         subtype = str(r["Subgroup_fr"]).strip()
-        score = round(float(r["Probability"]) / 100.0, 9)
+        score   = round(float(r["Probability"]) / 100.0, 9)
         rows.append({"Sample": sample, "classifier": "Maylis",
                      "subtype": subtype, "score": score})
     return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
-# Parser registry  —  (classifier_subdir, results_subdir, parser_function)
+# Parser registry  --  (classifier_subdir, results_subdir, parser_function)
 # Entries are skipped silently when the classifier directory is absent,
 # so the script works regardless of which classifiers were actually run.
 # ---------------------------------------------------------------------------
 
 PARSERS = [
-    ("ALLcatchR",   "results", parse_allcatchr_lineage),
-    ("ALLcatchR",   "results", parse_allcatchr_subtype),
-    ("MD-ALL",      "results", parse_md_all),
-    ("MnM",         "results", parse_mnm_lineage),
-    ("MnM",         "results", parse_mnm_subtype),
-    ("SIGNATURE",   "results", parse_signature),
-    ("Maylis",      "results", parse_maylis),
-    ("AMLmapR",     "results", parse_amlmapr),
-    ("AttentionAML","results", parse_attentionaml),
+    ("ALLcatchR",    "results", parse_allcatchr_lineage),
+    ("ALLcatchR",    "results", parse_allcatchr_subtype),
+    ("MD-ALL",       "results", parse_md_all),
+    ("MnM",          "results", parse_mnm_lineage),
+    ("MnM",          "results", parse_mnm_subtype),
+    ("SIGNATURE",    "results", parse_signature),
+    ("Maylis",       "results", parse_maylis),
+    ("AMLmapR",      "results", parse_amlmapr),
+    ("AttentionAML", "results", parse_attentionaml),
 ]
 
 
@@ -322,25 +362,23 @@ def build_summary(classifiers_dir: str) -> pd.DataFrame:
         classifier_path = os.path.join(classifiers_dir, classifier_dir)
         results_dir     = os.path.join(classifier_path, results_subdir)
 
-        # Skip entire classifier if its top-level directory is absent
         if not os.path.isdir(classifier_path):
             print(f"  [SKIP] classifier not found: {classifier_dir}/")
             continue
 
-        # Skip if the results sub-directory is missing (ran but produced nothing)
         if not os.path.isdir(results_dir):
             print(f"  [SKIP] results dir missing:  {classifier_dir}/{results_subdir}/")
             continue
 
         try:
             part = parser_fn(results_dir)
-            print(f"  [OK]   {parser_fn.__name__:35s}  → {len(part)} rows")
+            print(f"  [OK]   {parser_fn.__name__:35s}  -> {len(part)} rows")
             all_parts.append(part)
         except Exception as exc:
             print(f"  [ERR]  {parser_fn.__name__}: {exc}")
 
     if not all_parts:
-        raise RuntimeError("No data parsed — check your classifiers directory.")
+        raise RuntimeError("No data parsed -- check your classifiers directory.")
 
     summary = pd.concat(all_parts, ignore_index=True)
     summary["score"] = summary["score"].round(9)
@@ -349,7 +387,7 @@ def build_summary(classifiers_dir: str) -> pd.DataFrame:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Rebuild MP3531_Classification-summary.csv from classifier subdirectories."
+        description="Rebuild Classification-summary.csv from classifier subdirectories."
     )
     parser.add_argument(
         "--classifiers-dir", "-d",
@@ -358,8 +396,8 @@ def main():
     )
     parser.add_argument(
         "--output", "-o",
-        default="MP3531_Classification-summary.csv",
-        help="Output CSV path (default: MP3531_Classification-summary.csv)"
+        default="Classification-summary.csv",
+        help="Output CSV path"
     )
     args = parser.parse_args()
 
@@ -368,7 +406,6 @@ def main():
     print(f"Output file           : {args.output}\n")
 
     summary = build_summary(classifiers_dir)
-
     summary.to_csv(args.output, index=False)
     print(f"\nWrote {len(summary)} rows to {args.output}")
 
