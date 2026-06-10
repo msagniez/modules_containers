@@ -42,6 +42,24 @@ def normalise_sample_name(name: str) -> str:
 # ALLcatchR filename conventions
 #   new: ALLcatchR_lineage_results.csv / ALLcatchR_ball_results.csv / ALLcatchR_tall_results.csv
 #   old: gene_counts_lineage-prediction.tsv / gene_counts_ball-prediction.tsv / gene_counts_tall-prediction.tsv
+_MD_ALL_NAMES = [
+    "MD-ALL_predictions.csv",
+    "MD-ALL_predictions.tsv",
+]
+
+def _md_all_path(results_dir: str) -> tuple[str, str]:
+    """Return (path, sep) for the MD-ALL predictions file."""
+    for fname in _MD_ALL_NAMES:
+        path = os.path.join(results_dir, fname)
+        if os.path.exists(path):
+            sep = "\t" if fname.endswith(".tsv") else ","
+            return path, sep
+    checked = ", ".join(_MD_ALL_NAMES)
+    raise FileNotFoundError(
+        f"MD-ALL predictions file not found in {results_dir}. Tried: {checked}"
+    )
+
+
 _ALLCATCHR_NAMES = {
     "lineage": [
         "ALLcatchR_lineage_results.csv",
@@ -89,6 +107,8 @@ def parse_allcatchr_lineage(results_dir: str) -> pd.DataFrame:
     """
     path, sep = _allcatchr_path(results_dir, "lineage")
     df = pd.read_csv(path, sep=sep)
+    df.columns = [c.strip() for c in df.columns]
+    df = df.rename(columns={"sample": "Sample"})  # normalise case
     rows = []
     for _, r in df.iterrows():
         sample  = str(r["Sample"]).strip()
@@ -123,6 +143,8 @@ def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
     # B-ALL / Unclassified
     ball_path, ball_sep = _allcatchr_path(results_dir, "ball")
     ball_df   = pd.read_csv(ball_path, sep=ball_sep)
+    ball_df.columns = [c.strip() for c in ball_df.columns]
+    ball_df = ball_df.rename(columns={"sample": "Sample", "prediction": "Prediction", "score": "Score"})
     for _, r in ball_df.iterrows():
         sample  = str(r["Sample"]).strip()
         lineage = lineage_map.get(sample, "Unclassified")
@@ -135,6 +157,8 @@ def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
     # T-ALL
     tall_path, tall_sep = _allcatchr_path(results_dir, "tall")
     tall_df      = pd.read_csv(tall_path, sep=tall_sep)
+    tall_df.columns = [c.strip() for c in tall_df.columns]
+    tall_df = tall_df.rename(columns={"sample": "Sample"})
     cluster_cols = [c for c in tall_df.columns
                     if c.startswith("C") and c != "BC_pred"]
 
@@ -178,7 +202,21 @@ def parse_md_all(results_dir: str) -> pd.DataFrame:
     right-to-left for the first parseable float to locate svm_predScore,
     with svm_pred one field to its left.
     """
-    path = os.path.join(results_dir, "MD-ALL_predictions.csv")
+    path, sep = _md_all_path(results_dir)
+    # TSV files don't have the embedded-comma problem — use pandas directly
+    if sep == "\t":
+        df = pd.read_csv(path, sep="\t")
+        rows = []
+        for _, r in df.iterrows():
+            sample = str(r["id"]).strip()
+            rows.append({"Sample": sample, "classifier": "MD-ALL_phenograph",
+                         "subtype": str(r["PhenoGraph_pred"]).strip(),
+                         "score":   round(float(r["PhenoGraph_predScore"]), 9)})
+            rows.append({"Sample": sample, "classifier": "MD-ALL_svm",
+                         "subtype": str(r["svm_pred"]).strip(),
+                         "score":   round(float(r["svm_predScore"]), 9)})
+        return pd.DataFrame(rows)
+    # CSV: label columns contain embedded commas — parse line by line
     rows = []
     with open(path, newline="") as fh:
         reader = _csv.reader(fh)
