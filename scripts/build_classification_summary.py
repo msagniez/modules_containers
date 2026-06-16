@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Rebuilds MP3531_Classification-summary.csv from classifier subdirectories.
+Builds MPXXXX_Classification-summary.csv from classifier subdirectories.
 
 Expected directory layout (relative to --classifiers-dir):
   ALLcatchR/results/ALLcatchR_lineage_results.csv
   ALLcatchR/results/ALLcatchR_ball_results.csv   (used for B-ALL and Unclassified samples)
   ALLcatchR/results/ALLcatchR_tall_results.csv   (used for T-ALL samples)
-  MD-ALL/results/MD-ALL_predictions.csv
+  MD-ALL/results/MD-ALL_predictions.tsv
   MnM/results/MnM_lineage-predictions.csv
   MnM/results/MnM_subtype-predictions.csv
   SIGNATURE/results/SIGNATURE_B_predictions.csv
@@ -157,11 +157,12 @@ def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
 
     # T-ALL
     tall_path, tall_sep = _allcatchr_path(results_dir, "tall")
-    tall_df      = pd.read_csv(tall_path, sep=tall_sep)
+    tall_df = pd.read_csv(tall_path, sep=tall_sep)
     tall_df.columns = [c.strip() for c in tall_df.columns]
     tall_df = tall_df.rename(columns={"sample": "Sample"})
-    cluster_cols = [c for c in tall_df.columns
-                    if c.startswith("C") and c != "BC_pred"]
+
+    # Cluster probability columns: positions 2–23 (1-indexed) = indices 1–22
+    score_cols = list(tall_df.columns[1:23])
 
     for _, r in tall_df.iterrows():
         sample  = str(r["Sample"]).strip()
@@ -169,18 +170,13 @@ def parse_allcatchr_subtype(results_dir: str) -> pd.DataFrame:
         if lineage != "T-ALL":
             continue
 
-        bc_pred = str(r.get("BC_pred", "")).strip()
-        subtype = bc_pred if bc_pred else "Unclassified"
+        vals    = pd.to_numeric(r[score_cols], errors="coerce")
+        subtype = vals.idxmax() if not vals.isna().all() else "Unclassified"
+        score   = float(vals.max()) if not vals.isna().all() else 0.0
 
-        score = 0.0
-        if bc_pred and cluster_cols:
-            primary = bc_pred.split(";")[0].strip()
-            if primary in tall_df.columns:
-                val   = r[primary]
-                score = float(val) if pd.notna(val) else 0.0
-            else:
-                vals  = pd.to_numeric(r[cluster_cols], errors="coerce")
-                score = float(vals.max()) if not vals.isna().all() else 0.0
+        # Strip cluster number, keep only the description in parentheses
+        # e.g. "C13 (NUP214, MLLT10, KMT2A)" -> "NUP214, MLLT10, KMT2A"
+        subtype = re.sub(r"^C\d+[\.\d]*\s*\((.+)\)$", r"\1", subtype)
 
         rows.append({"Sample": sample, "classifier": "ALLcatchR_subtype",
                      "subtype": subtype, "score": round(score, 9)})
