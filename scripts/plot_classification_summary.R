@@ -126,6 +126,7 @@ useColsSubtype <- c(
   "HOXA9"                    = "#43B3AE",
   "BCL11B-ARID1B"            = "#81D8D0",
   "MEF2C subtype T-ALL"      = "#81D8D0",
+  "NUP214, MLLT10, KMT2A"    = "#2AB5A5",
 
   # AML
   "AML"                      = "#80B1D3",
