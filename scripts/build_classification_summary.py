@@ -281,37 +281,59 @@ def parse_signature(results_dir: str) -> pd.DataFrame:
     """
     SIGNATURE_B_predictions.csv and SIGNATURE_T_predictions.csv
     Format: rows = signature names, columns = sample names.
-    For each sample, pick the signature with the highest score.
-    If a sample appears in both files, keep the higher-scoring entry.
+
+    SIGNATURE_B_predictions.csv includes a generic 'T-cell' flag row used
+    to mark samples that aren't B-lineage -- it is not a real T-ALL subtype
+    call. So for each sample:
+      - Parse SIGNATURE_B_predictions.csv and take its top-scoring row.
+      - If that top call is exactly 'T-cell', re-parse the sample using
+        SIGNATURE_T_predictions.csv instead, and use that result.
+      - Otherwise, keep the B-file result as-is.
+    Samples that only appear in the T file (not in the B file at all) are
+    taken directly from the T file.
+    Samples with all-NaN scores in a file are skipped (with a warning).
     """
-    rows = []
-    for fname in ("SIGNATURE_B_predictions.csv", "SIGNATURE_T_predictions.csv"):
+    def best_calls(fname):
+        """Return {sample: (subtype, score)} of top-scoring row per sample column."""
         path = os.path.join(results_dir, fname)
         if not os.path.exists(path):
-            continue
+            return {}
         df = pd.read_csv(path, index_col=0)
+        best = {}
         for col in df.columns:
-            sample     = normalise_sample_name(col)
+            sample = normalise_sample_name(col)
             col_vals = df[col].astype(float)
             if col_vals.isna().all():
                 print(f"  [WARN] SIGNATURE: all-NaN scores for sample "
                       f"'{sample}' in {fname}; skipping")
                 continue
-            best_idx   = col_vals.idxmax(skipna=True)
-            best_score = float(df[col][best_idx])
-            rows.append({"Sample": sample, "classifier": "SIGNATURE",
-                         "subtype": str(best_idx).strip(),
-                         "score":   round(best_score, 9)})
+            best_idx = col_vals.idxmax(skipna=True)
+            best[sample] = (str(best_idx).strip(), float(col_vals.loc[best_idx]))
+        return best
 
-    result = pd.DataFrame(rows)
-    if result.empty:
-        return result
-    result = (result
-              .sort_values("score", ascending=False)
-              .drop_duplicates(subset="Sample")
-              .sort_index()
-              .reset_index(drop=True))
-    return result
+    best_b = best_calls("SIGNATURE_B_predictions.csv")
+    best_t = best_calls("SIGNATURE_T_predictions.csv")
+
+    rows = []
+    for sample, (subtype, score) in best_b.items():
+        if subtype == "T-cell" and sample in best_t:
+            subtype, score = best_t[sample]
+        elif subtype == "T-cell":
+            print(f"  [WARN] SIGNATURE: '{sample}' flagged T-cell in B file "
+                  f"but no entry found in SIGNATURE_T_predictions.csv; "
+                  f"keeping B-file call")
+        rows.append({"Sample": sample, "classifier": "SIGNATURE",
+                     "subtype": subtype, "score": round(score, 9)})
+
+    # samples present only in the T file (never appeared in the B file)
+    for sample, (subtype, score) in best_t.items():
+        if sample not in best_b:
+            rows.append({"Sample": sample, "classifier": "SIGNATURE",
+                         "subtype": subtype, "score": round(score, 9)})
+
+    if not rows:
+        return pd.DataFrame(rows)
+    return pd.DataFrame(rows).sort_values("Sample").reset_index(drop=True)
 
 
 def parse_amlmapr(results_dir: str) -> pd.DataFrame:
