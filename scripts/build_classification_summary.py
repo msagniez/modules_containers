@@ -292,6 +292,11 @@ def parse_signature(results_dir: str) -> pd.DataFrame:
         df = pd.read_csv(path, index_col=0)
         for col in df.columns:
             sample     = normalise_sample_name(col)
+            col_vals = df[col].astype(float)
+            if col_vals.isna().all():
+                print(f"  [WARN] SIGNATURE: all-NaN scores for sample "
+                      f"'{sample}' in {fname}; skipping")
+                continue
             best_idx   = df[col].astype(float).idxmax()
             best_score = float(df[col][best_idx])
             rows.append({"Sample": sample, "classifier": "SIGNATURE",
