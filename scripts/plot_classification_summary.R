@@ -246,6 +246,7 @@ useColsSubtype <- c(
   "Neuroblastoma"                         = "#D9AC7A",
   "Pretreated necrotic poorly differentiated NB" = "#D9AC7A",
   "NB"                                    = "#D9AC7A",
+  "Ganglioneuroblastoma, intermixed"      = "#D9AC7A",
   "Ganglio NB"                            = "#D9AC7A",
   "GN"                                    = "#D9AC7A",
   "Neurofibroma"                          = "#D19653",
