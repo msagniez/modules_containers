@@ -29,6 +29,8 @@ COPY scripts/gene_summarize.R /opt/scripts/gene_summarize.R
 RUN chmod +x /opt/scripts/gene_summarize.R
 COPY scripts/gene_summarize_rsem.R /opt/scripts/gene_summarize_rsem.R
 RUN chmod +x /opt/scripts/gene_summarize_rsem.R
+COPY scripts/gene_summarize_oarfish.R /opt/scripts/gene_summarize_oarfish.R
+RUN chmod +x /opt/scripts/gene_summarize_oarfish.R
 
 # Set the working directory
 WORKDIR /opt

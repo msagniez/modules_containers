@@ -5,16 +5,14 @@
 #Parse command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  cat("Usage: Rscript gene_summarize.R [options] <gtf_file> <quant_file1> [quant_file2 ...]\n")
-  cat("   or: Rscript gene_summarize.R [options] --tx2gene <tx2gene.txt> <quant_file1> [quant_file2 ...]\n")
-
+  cat("Usage: Rscript gene_summarize.R [--gene-names] [--ignore-tx-version] <gtf_file> <quant_file1> [quant_file2 ...]\n")
+  cat("   or: Rscript gene_summarize.R [--gene-names] [--ignore-tx-version] --tx2gene <tx2gene.txt> <quant_file1> [quant_file2 ...]\n")
   cat("\nOptions:\n")
   cat("  --gene-names         Use gene names instead of gene IDs in output\n")
   cat("  --ignore-tx-version  Strip version suffixes from transcript IDs\n")
-  cat("  --type <format>      Quantification format for tximport\n")
-  cat("                       Default: oarfish\n")
-  cat("                       Supported formats:oarfish,salmon,alevin,sailfish,kallisto,rsem,stringtie,none\n")
-
+  cat("                       Handles both directions:\n")
+  cat("                         - quant has versions, tx2gene does not: stripped via ignoreTxVersion in tximport\n")
+  cat("                         - tx2gene has versions, quant does not: stripped from tx2gene directly\n")
   cat("\nOutput: gene_counts.tsv and gene_tpm.tsv in current directory\n")
   quit(status = 1)
 }
@@ -34,44 +32,6 @@ if ("--ignore-tx-version" %in% args) {
 }
 
 cat(sprintf("ignore_tx_version = %s\n", ignore_tx_version))
-
-# Check for --type option
-quant_type <- "oarfish"
-
-type_idx <- which(args == "--type")
-if (length(type_idx) > 0) {
-
-  if (type_idx == length(args)) {
-    stop("--type requires a value")
-  }
-
-  quant_type <- args[type_idx + 1]
-
-  supported_types <- c(
-    "oarfish",
-    "salmon",
-    "alevin",
-    "sailfish",
-    "kallisto",
-    "rsem",
-    "stringtie",
-    "none"
-  )
-
-  if (!(quant_type %in% supported_types)) {
-    stop(
-      sprintf(
-        "Unsupported type '%s'. Supported types: %s",
-        quant_type,
-        paste(supported_types, collapse = ", ")
-      )
-    )
-  }
-
-  args <- args[-c(type_idx, type_idx + 1)]
-}
-
-cat(sprintf("quantification type = %s\n", quant_type))
 
 #Load required libraries
 suppressPackageStartupMessages({
@@ -162,7 +122,7 @@ names(quant_files) <- gsub(".*/", "", gsub("\\..*$", "", quant_files))
 cat("Importing", length(quant_files), "quantification file(s)...\n")
 
 # ignoreTxVersion = TRUE only when flag set AND versions are on the quant file side
-txi <- tximport(quant_files, type = quant_type, tx2gene = tx2gene, ignoreTxVersion = ignore_tx_version)
+txi <- tximport(quant_files, type = "oarfish", tx2gene = tx2gene, ignoreTxVersion = ignore_tx_version)
 
 #Write gene-level counts (rounded to integers)
 cat("Writing gene-level counts to gene_counts.tsv...\n")
