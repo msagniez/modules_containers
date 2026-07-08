@@ -1,0 +1,78 @@
+name: Update README Module Status
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - '*'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate module table
+        run: |
+          REPO="${{ github.repository }}"
+          WORKFLOW="build-push.yml"
+
+          {
+            echo "| Module | Build Status | Last Commit |"
+            echo "|---------|-------------|-------------|"
+
+            git for-each-ref \
+              --sort=-committerdate \
+              --format='%(refname:short)|%(committerdate:short)' \
+              refs/remotes/origin/ |
+            grep -v "origin/HEAD" |
+            while IFS='|' read BRANCH DATE; do
+
+              BRANCH=${BRANCH#origin/}
+
+              echo "| [$BRANCH](https://github.com/$REPO/tree/$BRANCH) | [![Build Status](https://github.com/$REPO/actions/workflows/$WORKFLOW/badge.svg?branch=$BRANCH)](https://github.comKFLOW?query=branch%3A$BRANCH) | $DATE |"
+
+            done
+          } > module_status.md
+
+      - name: Update README
+        run: |
+          awk '
+          BEGIN {skip=0}
+          /<!-- MODULE_STATUS_START -->/ {
+            print
+            while ((getline line < "module_status.md") > 0)
+              print line
+            skip=1
+            next
+          }
+          /<!-- MODULE_STATUS_END -->/ {
+            skip=0
+          }
+          !skip {print}
+          ' README.md > README.new
+
+          mv README.new README.md
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add README.md
+
+          git diff --cached --quiet || \
+          git commit -m "docs: update module status table"
+
+          git push
