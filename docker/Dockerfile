@@ -2,9 +2,9 @@ FROM anaconda/miniconda:latest
 
 WORKDIR /opt
 
-RUN conda install -c bioconda oarfish && \
-    conda clean --all
+RUN conda install -y -c bioconda oarfish && \
+    conda clean -a -y
 
-ENV PATH="/opt/conda/envs/base/bin:${PATH}"
+ENV PATH="/opt/conda/bin:${PATH}"
 
 RUN oarfish -h
