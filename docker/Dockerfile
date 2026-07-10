@@ -1,9 +1,9 @@
-FROM anaconda/miniconda:latest
+FROM docker.io/mambaorg/micromamba:latest
 
 WORKDIR /opt
 
-RUN conda install -y -c bioconda oarfish && \
-    conda clean -a -y
+RUN micromamba install -y -n base -c bioconda -c conda-forge oarfish && \\
+    micromamba clean --all --yes
 
 ENV PATH="/opt/conda/bin:${PATH}"
 
