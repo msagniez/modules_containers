@@ -1,13 +1,11 @@
-FROM rockylinux/rockylinux:9.1
+FROM debian:bookworm-slim
 
-# Update system and install dependencies
-RUN dnf -y update && \
-    dnf -y install \
-        curl \
-        ca-certificates && \
-    dnf clean all
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install oarfish (prebuilt binary release)
 ARG OARFISH_VERSION=v0.10.0
 
 RUN curl --proto '=https' --tlsv1.2 -LsSf \
@@ -17,5 +15,4 @@ RUN curl --proto '=https' --tlsv1.2 -LsSf \
     chmod +x /usr/local/bin/oarfish && \
     oarfish --version
 
-# Set the working directory
 WORKDIR /opt
