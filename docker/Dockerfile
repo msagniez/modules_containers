@@ -1,10 +1,9 @@
-
-FROM mambaorg/micromamba:latest
+FROM anaconda/miniconda:latest
 
 WORKDIR /opt
 
-RUN micromamba install -y -n base -c bioconda -c conda-forge oarfish && \
-    micromamba clean --all --yes
+RUN conda install -c bioconda oarfish && \
+    conda clean --all
 
 ENV PATH="/opt/conda/envs/base/bin:${PATH}"
 
