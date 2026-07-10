@@ -1,6 +1,6 @@
 process OARFISH_QUANTIFY_READ {
     // TODO : SET FIXED VERSION WHEN PIPELINE IS STABLE
-    container 'ghcr.io/msagniez/oarfish:latest'
+    container 'ghcr.io/msagniez/modules_containers/oarfish:latest'
     // TODO : SET LEVEL OF RESSOURCES
     tag "$meta.id"
     label 'process_medium'
@@ -51,7 +51,7 @@ process OARFISH_QUANTIFY_READ {
 
 process OARFISH_QUANTIFY_ALIGNMENT {
     // TODO : SET FIXED VERSION WHEN PIPELINE IS STABLE
-    container 'ghcr.io/msagniez/oarfish:latest'
+    container 'ghcr.io/msagniez/modules_containers/oarfish:latest'
     // TODO : SET LEVEL OF RESSOURCES
     tag "$meta.id"
     label 'process_medium'
@@ -98,7 +98,7 @@ process OARFISH_QUANTIFY_ALIGNMENT {
 
 process OARFISH_QUANTIFY_GENOMEREADPROJECTION {
     // TODO : SET FIXED VERSION WHEN PIPELINE IS STABLE
-    container 'ghcr.io/msagniez/oarfish:latest'
+    container 'ghcr.io/msagniez/modules_containers/oarfish:latest'
     // TODO : SET LEVEL OF RESSOURCES
     tag "$meta.id"
     label 'process_medium'
@@ -150,7 +150,7 @@ process OARFISH_QUANTIFY_GENOMEREADPROJECTION {
 
 process OARFISH_QUANTIFY_GENOMEALIGNMENTPROJECTION {
     // TODO : SET FIXED VERSION WHEN PIPELINE IS STABLE
-    container 'ghcr.io/msagniez/oarfish:latest'
+    container 'ghcr.io/msagniez/modules_containers/oarfish:latest'
     // TODO : SET LEVEL OF RESSOURCES
     tag "$meta.id"
     label 'process_medium'
