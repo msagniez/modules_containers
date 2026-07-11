@@ -11,6 +11,7 @@ This repository contains container and workflow modules, with one module per bra
 <!-- MODULE_STATUS_START -->
 | Module | Build Status | Last Commit |
 |---------|-------------|-------------|
+| [oarfish](https://github.com/msagniez/modules_containers/tree/oarfish) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=oarfish)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Aoarfish) | 2026-07-10 20:28:06 |
 | [tximport](https://github.com/msagniez/modules_containers/tree/tximport) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=tximport)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Atximport) | 2026-07-08 14:25:51 |
 | [summary](https://github.com/msagniez/modules_containers/tree/summary) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=summary)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Asummary) | 2026-07-03 19:03:18 |
 | [mdall](https://github.com/msagniez/modules_containers/tree/mdall) | [![Build Status](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml/badge.svg?branch=mdall)](https://github.com/msagniez/modules_containers/actions/workflows/build-push.yml?query=branch%3Amdall) | 2026-06-05 15:54:58 |
