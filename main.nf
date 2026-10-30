@@ -3,7 +3,7 @@ process MNM_PREDICT {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "ghcr.io/${params.container_owner}/modules_containers/mnm:latest"
+    container "ghcr.io/msagniez/modules-containers/mnm:latest"
 
     input:
     tuple val(meta), path(quant_file)
