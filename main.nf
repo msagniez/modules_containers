@@ -6,7 +6,7 @@ process MNM_PREDICT {
     container "ghcr.io/msagniez/modules-containers/mnm:latest"
 
     input:
-    tuple val(meta), path(quant_file), path(outdir)
+    tuple val(meta), path(quant_file)
 
     output:
     tuple val(meta), path("${meta.id}/MnM_subtype-predictions.csv"),    emit: subtype_predictions
