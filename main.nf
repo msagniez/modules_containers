@@ -2,7 +2,7 @@ process GENE_SUMMARIZE {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "ghcr.io/msagniez/modules_containers/tximport:latest"
+    container "ghcr.io/msagniez/modules-containers/tximport:latest"
 
     input:
     tuple val(meta), path(quant_files)
