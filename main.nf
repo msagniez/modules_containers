@@ -6,14 +6,13 @@ process MNM_PREDICT {
     container "ghcr.io/msagniez/modules-containers/mnm:latest"
 
     input:
-    tuple val(meta), path(quant_file)
+    tuple val(meta), path(quant_file), path(outdir)
 
     output:
     tuple val(meta), path("${meta.id}/MnM_subtype-predictions.csv"), emit: subtype_predictions
     tuple val(meta), path("${meta.id}/MnM_lineage-predictions.csv"),    emit: type_predictions
 
     script:
-    def outdir = "${task.workDir}/${meta.id}"
     """
 
     Rscript /opt/scripts/MnM_predict.R \\
